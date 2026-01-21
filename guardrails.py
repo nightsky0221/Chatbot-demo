@@ -11,9 +11,21 @@ INJECTION_PATTERNS = [
     "remember that",
 ]
 
+
+
+
+
+
+
 def is_prompt_injection(user_input: str) -> bool:
     text = user_input.lower()
     return any(p in text for p in INJECTION_PATTERNS)
+
+
+
+
+
+
 
 def guard_input(user_input: str) -> str:
     if is_prompt_injection(user_input):

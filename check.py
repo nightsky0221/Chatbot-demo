@@ -1,6 +1,12 @@
 import json
 import llm
 
+
+
+
+
+
+
 EVALUATOR_PROMPT = {
     "role": "system",
     "content": (
@@ -13,6 +19,13 @@ EVALUATOR_PROMPT = {
         "{ \"score\": float between 0 and 1, \"issues\": [string]}"
     )
 }
+
+
+
+
+
+
+
 
 def evaluate_answer(answer: str, persona: str) -> dict:
     messages = [
@@ -40,6 +53,13 @@ def evaluate_answer(answer: str, persona: str) -> dict:
 
     return data
 
+
+
+
+
+
+
+
 def basic_confidence_check(parsed: dict) -> list:
     issues = []
 
@@ -62,6 +82,15 @@ def basic_confidence_check(parsed: dict) -> list:
 
     return issues
 
+
+
+
+
+
+
+
+
+
 LOW_SCORE_THRESHOLD = 0.5
 MAX_ISSUES_ALLOWED = 2
 
@@ -81,6 +110,14 @@ def decide_response_action(parsed: dict) -> str:
         return "warn"
     
     return "ok"
+
+
+
+
+
+
+
+
 
 # Off by default
 def should_refuse(parsed: dict) -> bool:

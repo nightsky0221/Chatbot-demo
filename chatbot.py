@@ -8,20 +8,41 @@ import check as chk
 import tools
 import guardrails as gd
 
+
+
+
+
+
+
+
+
 # create conversation store to read the user requests, send reponses and save histories by per persona.
 conversations = {"tutor": [], "support": [], "other": []}
 # create global conversation manager over personas
 global_conversation = []
 
+
+
+
+
+
 # limit the conversation history counts
 def trim_global(messages, globe_max=50):
     return messages[-globe_max:]
 
+
+
+
+
 def trim_memory(messages, max_memory=6):
     return messages[-max_memory:]
 
+
+
+
+
+
 # define summarization variables
-SUMMARY_TRIGGER = 8
 MAX_TURN = 4
 
 conversation_summaries = {
@@ -58,7 +79,7 @@ def chat(user_input, persona=None):
 
 # after a certain turns, we start summarization to use limited memory efficiently
 # *2 means that every conversation includes user and assistant dialogues for a couple
-    if len(conversations[persona]) >= SUMMARY_TRIGGER * 2:
+    if summarize.should_summarize(conversations[persona]):
 
         # extract system messages and cut the old messages from whole conversation histories.
         old_messages = conversations[persona][:-MAX_TURN]
@@ -154,6 +175,12 @@ def chat(user_input, persona=None):
     # send the response to the user
     return parsed
 
+
+
+
+
+
+
 # a reset function to initialize the conversation history
 def reset_conversation():
     global global_conversation
@@ -162,6 +189,13 @@ def reset_conversation():
     global_conversation.clear()
 
 # new chat function to use json_structure
+
+
+
+
+
+
+
 
 def chat_json(user_input, persona=None):
     try:
@@ -210,6 +244,13 @@ def chat_json(user_input, persona=None):
 
     return parsed
 
+
+
+
+
+
+
+
 def build_messages(persona_prompt, summary, conversation):
     messages = [persona_prompt]
 
@@ -224,6 +265,15 @@ def build_messages(persona_prompt, summary, conversation):
         for m in conversation
     ])
     return messages
+
+
+
+
+
+
+
+
+
 
 MAX_AGENT_STEPS = 3
 
@@ -248,31 +298,34 @@ def run_agent_loop(persona, persona_prompt, summary, conversation, llm_call_fn):
             for m in conversation
         ])
 
-        raw = call_llm_with_retries(messages=messages, call_fn=llm_call_fn, persona=persona)
+        # Call LLM
+        raw = call_llm_with_retries(
+            messages=messages,
+            call_fn=llm_call_fn,
+            persona=persona,
+        )
+
         parsed = js.parse_and_validate(raw)
 
+        # Check for tool request
         tool_request = parsed.get("tool_request")
 
         if not tool_request:
+            # Explicit stop condition
             break
 
-        tool_name = tool_request.get("tool")
-        arguments = tool_request.get("arguments", {})
-
-        if tool_name not in tools.TOOLS:
-            parsed["tool_error"] = f"Unknown tool: {tool_name}"
-            break
-
-        result = tools.TOOLS[tool_name]["function"](**arguments)
-
-        if parsed is None:
-            raise RuntimeError("Agent loop exited without producing a response")
+        # Execute tool safely
+        tool_name, arguments = tools.validate_tool_request(tool_request)
+        observation = tools.execute_tool(tool_name, arguments)
 
         conversation.append({
-            "role": "system",
-            "content": f"Tool result ({tool_name}): {result}"
+            "role": "tool",
+            "content": observation,
         })
 
         steps += 1
+
+    if parsed is None:
+        raise RuntimeError("Agent loop exited without producing a response")
 
     return parsed

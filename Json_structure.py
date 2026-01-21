@@ -1,6 +1,11 @@
 import json
 import llm
 
+
+
+
+
+
 OUTPUT_SCHEMA = {
     "answer": "string",
     "confidence": "number between 0 and 1",
@@ -9,6 +14,11 @@ OUTPUT_SCHEMA = {
         "arguments": "object"
     },
 }
+
+
+
+
+
 
 JSON_SYSTEM_PROMPT = {
     "role": "system",
@@ -20,6 +30,12 @@ JSON_SYSTEM_PROMPT = {
         "If no tool is needed, set tool_request to null. "
     )
 }
+
+
+
+
+
+
 
 def build_json_prompt(user_input, persona_prompt):
     return [
@@ -39,6 +55,11 @@ RESPONSE SCHEMA:
         }
     ]
 
+
+
+
+
+
 def parse_and_validate(response):
     try:
         data = json.loads(response)
@@ -56,10 +77,22 @@ def parse_and_validate(response):
     
     return data
 
+
+
+
+
+
+
 def structured_chat(user_input):
     messages = build_json_prompt(user_input, persona_prompt=None)
     raw_response = llm.llm_call(messages, persona="other")
     return parse_and_validate(raw_response)
+
+
+
+
+
+
 
 TOOL_REQUEST_SCHEMA = {
     "tool": "string",
